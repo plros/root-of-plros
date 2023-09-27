@@ -1,0 +1,37 @@
+From 21a492610a44592039daec4e2c4d86a1d8bbf796 Mon Sep 17 00:00:00 2001
+From: Adithya R <gh0strider.2k18.reborn@gmail.com>
+Date: Tue, 26 Oct 2021 16:18:49 +0530
+Subject: [PATCH] CameraManager: HAX for depth sensor on ginkgo [1/2]
+
+ * miui camera uses logical id 61 as depth sensor on portrait mode
+   but oss libcam maps it to physical id 2 which is wrong, our physical
+   id of depth sensor is 20 so we must hack it this way
+
+Change-Id: Icb04ebcfc3b2d3c19a434303d9b6b7822c3d9355
+---
+ core/java/android/hardware/camera2/CameraManager.java | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/hardware/camera2/CameraManager.java b/core/java/android/hardware/camera2/CameraManager.java
+index 3e5fee84b7be..6bd7cf17708a 100644
+--- a/core/java/android/hardware/camera2/CameraManager.java
++++ b/core/java/android/hardware/camera2/CameraManager.java
+@@ -686,8 +686,14 @@ public final class CameraManager {
+         HashMap<String, CameraCharacteristics> physicalIdsToChars =
+                 new HashMap<String, CameraCharacteristics>();
+         Set<String> physicalCameraIds = chars.getPhysicalCameraIds();
++        CameraCharacteristics physicalChars;
+         for (String physicalCameraId : physicalCameraIds) {
+-            CameraCharacteristics physicalChars = getCameraCharacteristics(physicalCameraId);
++            try {
++                physicalChars = getCameraCharacteristics(physicalCameraId);
++            } catch (Exception e) {
++                physicalCameraId = "20";
++                physicalChars = getCameraCharacteristics(physicalCameraId);
++            }
+             physicalIdsToChars.put(physicalCameraId, physicalChars);
+         }
+         return physicalIdsToChars;
+-- 
+2.39.2
+

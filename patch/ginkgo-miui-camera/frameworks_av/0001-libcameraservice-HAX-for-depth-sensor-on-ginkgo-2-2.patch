@@ -1,0 +1,67 @@
+From 4c540e545aff232e24a8b97bc6b31329879f83ac Mon Sep 17 00:00:00 2001
+From: Adithya R <gh0strider.2k18.reborn@gmail.com>
+Date: Tue, 5 May 2020 13:33:12 +0530
+Subject: [PATCH 1/2] libcameraservice: HAX for depth sensor on ginkgo [2/2]
+
+ * miui camera uses logical id 61 as depth sensor on portrait mode
+   but oss libcam maps it to physical id 2 which is wrong, our physical
+   id of depth sensor is 20 so we must hack it this way
+
+[ghostrider-reborn 2021-10-26]
+ * updated for android 12
+
+[ghostrider-reborn 2022-09-23]
+ * updated for android 13
+
+[garry-rogov 2023-03-28]
+ * updated for android 13 QPR2
+ * fix error: too few arguments to function call, expected 4, have 3
+                        physicalId, false, &mPhysicalDeviceInfoMap[physicalId]);
+
+Change-Id: I57388d0e00fc21b99427e0c0b1ff9a39926b2243
+Signed-off-by: Adithya R <gh0strider.2k18.reborn@gmail.com>
+Signed-off-by: garry-rogov <garry.rogov@gmail.com>
+---
+ .../device3/hidl/HidlCamera3Device.cpp         | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+diff --git a/services/camera/libcameraservice/device3/hidl/HidlCamera3Device.cpp b/services/camera/libcameraservice/device3/hidl/HidlCamera3Device.cpp
+index c675c6349e..7d3ee7af07 100644
+--- a/services/camera/libcameraservice/device3/hidl/HidlCamera3Device.cpp
++++ b/services/camera/libcameraservice/device3/hidl/HidlCamera3Device.cpp
+@@ -29,6 +29,9 @@
+ #define CLOGE(fmt, ...) ALOGE("Camera %s: %s: " fmt, mId.string(), __FUNCTION__, \
+             ##__VA_ARGS__)
+ 
++#define CLOGW(fmt, ...) ALOGW("Camera %s: %s: " fmt, mId.string(), __FUNCTION__, \
++ ##__VA_ARGS__)
++
+ // Convenience macros for transitioning to the error state
+ #define SET_ERR(fmt, ...) setErrorState(   \
+     "%s: " fmt, __FUNCTION__,              \
+@@ -180,10 +183,19 @@ status_t HidlCamera3Device::initialize(sp<CameraProviderManager> manager,
+                     physicalId, /*overrideForPerfClass*/false, &mPhysicalDeviceInfoMap[physicalId],
+                     /*overrideToPortrait*/false);
+             if (res != OK) {
+-                SET_ERR_L("Could not retrieve camera %s characteristics: %s (%d)",
++                CLOGW("Could not retrieve camera %s characteristics: %s (%d)",
+                         physicalId.c_str(), strerror(-res), res);
+-                session->close();
+-                return res;
++                // HACK for ginkgo - check camera id 20 for depth sensor
++                physicalId = "20";
++                CLOGW("Trying physical camera %s if available", physicalId.c_str());
++                res = manager->getCameraCharacteristics(
++                        physicalId, false, &mPhysicalDeviceInfoMap[physicalId], true);
++                if (res != OK) {
++                    SET_ERR_L("Could not retrieve camera %s characteristics: %s (%d)",
++                            physicalId.c_str(), strerror(-res), res);
++                    session->close();
++                    return res;
++                }
+             }
+ 
+             bool usePrecorrectArray =
+-- 
+2.39.2
+
