@@ -8,7 +8,7 @@ rm -rf ../vendor/xiaomi/
 git clone https://github.com/Whot1966/vendor_xiaomi_ginkgo ../vendor/xiaomi/ginkgo --depth=1
 rm -rf ../kernel/asus/
 rm -rf ../kernel/xiaomi/
-git clone https://github.com/Whot1966/kernel_xiaomi_ginkgo ../kernel/xiaomi/ginkgo -b redsin/13 --depth=1
+git clone https://github.com/Whot1966/kernel_xiaomi_ginkgo ../kernel/xiaomi/ginkgo -b lineage-20.0
 rm -rf ../vendor/miuicamera
 git clone https://github.com/Whot1966/vendor_miuicamera ../vendor/miuicamera --depth=1
 rm -rf ../hardware/qcom-caf/sm8150/audio/
